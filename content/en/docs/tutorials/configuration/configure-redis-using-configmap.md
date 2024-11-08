@@ -56,18 +56,18 @@ Apply the ConfigMap created above, along with a Redis pod manifest:
 kubectl apply -f example-redis-config.yaml
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/website/main/content/en/examples/pods/config/redis-pod.yaml
 ```
-
 Examine the contents of the Redis pod manifest and note the following:
 
-* A volume named `config` is created by `spec.volumes[1]`
-* The `key` and `path` under `spec.volumes[1].configMap.items[0]` exposes the `redis-config` key from the 
-  `example-redis-config` ConfigMap as a file named `redis.conf` on the `config` volume.
-* The `config` volume is then mounted at `/redis-master` by `spec.containers[0].volumeMounts[1]`.
+First, a `config` volume is created by `spec.volumes[1]`.
+The `key` and `path` under `spec.volumes[1].configMap.items[0]` expose the `redis-config` key from the `example-redis-config` ConfigMap as a file named `redis.conf` on the `config` volume.
+Then the `config` volume is mounted at `/redis-master` by `spec.containers[0].volumeMounts[1]`.
 
 This has the net effect of exposing the data in `data.redis-config` from the `example-redis-config`
-ConfigMap above as `/redis-master/redis.conf` inside the Pod.
+ConfigMap above as `/redis-master/redis.conf` inside the pod.
 
 {{% code_sample file="pods/config/redis-pod.yaml" %}}
+
+### Verify configurations
 
 Examine the created objects:
 
@@ -85,7 +85,8 @@ NAME                             DATA   AGE
 configmap/example-redis-config   1      14s
 ```
 
-Recall that we left `redis-config` key in the `example-redis-config` ConfigMap blank:
+The `redis-config` key in the ConfigMap above was left blank.
+You can run the following command to confirm this:
 
 ```shell
 kubectl describe configmap/example-redis-config
@@ -104,7 +105,8 @@ Data
 redis-config:
 ```
 
-Use `kubectl exec` to enter the pod and run the `redis-cli` tool to check the current configuration:
+Use `kubectl exec` to enter the pod.
+Then run the `redis-cli` tool to check the current configuration:
 
 ```shell
 kubectl exec -it redis -- redis-cli
@@ -129,7 +131,7 @@ Similarly, check `maxmemory-policy`:
 127.0.0.1:6379> CONFIG GET maxmemory-policy
 ```
 
-Which should also yield its default value of `noeviction`:
+This should also yield its default value of `noeviction`:
 
 ```shell
 1) "maxmemory-policy"
