@@ -22,8 +22,8 @@ This example works with `kubectl` 1.14 and above. {{< version-check >}}
 By the end of this guide, you will be able to:
 
 * Create a ConfigMap with Redis configuration values
-* Verify that the configuration is correctly applied
 * Create a Redis pod that mounts and uses the created ConfigMap
+* Verify that the configuration has been correctly applied
 
 ## {{% heading "prerequisites" %}}
 
