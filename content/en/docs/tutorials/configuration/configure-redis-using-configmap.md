@@ -14,33 +14,28 @@ ConfigMaps make it possible to inject configuration data into application pods.
 This document provides a real-world example of how to configure Redis using a ConfigMap. 
 It assumes that you have already [configured a pod to use a ConfigMap](/docs/tasks/configure-pod-container/configure-pod-configmap/).
 
-
-
 ## {{% heading "objectives" %}}
 
+By the end of this tutorial, you will be able to:
 
 * Create a ConfigMap with Redis configuration values
-* Create a Redis Pod that mounts and uses the created ConfigMap
+* Create a Redis pod that mounts and uses the created ConfigMap
 * Verify that the configuration was correctly applied
 
-
-
 ## {{% heading "prerequisites" %}}
-
 
 {{< include "task-tutorial-prereqs.md" >}} {{< version-check >}}
 
 * The example shown on this page works with `kubectl` 1.14 and above.
 * Understand [Configure a Pod to Use a ConfigMap](/docs/tasks/configure-pod-container/configure-pod-configmap/).
 
-
-
 <!-- lessoncontent -->
 
-
-## Real World Example: Configuring Redis using a ConfigMap
+## Walkthrough
 
 Follow the steps below to configure a Redis cache using data stored in a ConfigMap.
+
+### Create ConfigMap
 
 First create a ConfigMap with an empty configuration block:
 
@@ -141,6 +136,8 @@ Which should also yield its default value of `noeviction`:
 2) "noeviction"
 ```
 
+### Add configuration values
+
 Now let's add some configuration values to the `example-redis-config` ConfigMap:
 
 {{% code_sample file="pods/config/example-redis-config.yaml" %}}
@@ -173,7 +170,7 @@ maxmemory 2mb
 maxmemory-policy allkeys-lru
 ```
 
-Check the Redis Pod again using `redis-cli` via `kubectl exec` to see if the configuration was applied:
+Check the Redis pod again using `redis-cli` via `kubectl exec` to see if the configuration was applied:
 
 ```shell
 kubectl exec -it redis -- redis-cli
@@ -205,8 +202,8 @@ Returns:
 2) "noeviction"
 ```
 
-The configuration values have not changed because the Pod needs to be restarted to grab updated
-values from associated ConfigMaps. Let's delete and recreate the Pod:
+The configuration values have not changed because the pod needs to be restarted to grab updated values from associated ConfigMaps. 
+Let's delete and recreate the Pod:
 
 ```shell
 kubectl delete pod redis
