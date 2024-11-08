@@ -2,6 +2,7 @@
 reviewers:
 - eparis
 - pmorie
+- ssycamore
 title: Configuring Redis using a ConfigMap
 content_type: tutorial
 weight: 30
@@ -9,37 +10,34 @@ weight: 30
 
 <!-- overview -->
 
-This page provides a real world example of how to configure Redis using a ConfigMap and builds upon the [Configure a Pod to Use a ConfigMap](/docs/tasks/configure-pod-container/configure-pod-configmap/) task. 
+ConfigMaps make it possible to inject configuration data into application pods.
 
+This document provides a basic example of how to configure Redis using a ConfigMap. 
+It assumes that you have already [configured a pod to use a ConfigMap](/docs/tasks/configure-pod-container/configure-pod-configmap/). 
 
+This example works with `kubectl` 1.14 and above. {{< version-check >}}
 
 ## {{% heading "objectives" %}}
 
+By the end of this guide, you will be able to:
 
 * Create a ConfigMap with Redis configuration values
-* Create a Redis Pod that mounts and uses the created ConfigMap
-* Verify that the configuration was correctly applied.
-
-
+* Create a Redis pod that mounts and uses the created ConfigMap
+* Verify that the configuration has been correctly applied
 
 ## {{% heading "prerequisites" %}}
 
-
-{{< include "task-tutorial-prereqs.md" >}} {{< version-check >}}
-
-* The example shown on this page works with `kubectl` 1.14 and above.
-* Understand [Configure a Pod to Use a ConfigMap](/docs/tasks/configure-pod-container/configure-pod-configmap/).
-
-
+{{< include "task-tutorial-prereqs.md" >}} 
 
 <!-- lessoncontent -->
 
-
-## Real World Example: Configuring Redis using a ConfigMap
+## Redis ConfigMap setup
 
 Follow the steps below to configure a Redis cache using data stored in a ConfigMap.
 
-First create a ConfigMap with an empty configuration block:
+### Create ConfigMap
+
+Create a ConfigMap with an empty configuration block:
 
 ```shell
 cat <<EOF >./example-redis-config.yaml
@@ -61,15 +59,16 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/website/main/conte
 
 Examine the contents of the Redis pod manifest and note the following:
 
-* A volume named `config` is created by `spec.volumes[1]`
-* The `key` and `path` under `spec.volumes[1].configMap.items[0]` exposes the `redis-config` key from the 
-  `example-redis-config` ConfigMap as a file named `redis.conf` on the `config` volume.
-* The `config` volume is then mounted at `/redis-master` by `spec.containers[0].volumeMounts[1]`.
+First, a config volume is created by `spec.volumes[1]`.
+The key and path under `spec.volumes[1].configMap.items[0]` expose the `redis-config` key from the ConfigMap as a file named `redis.conf` on the config volume.
+Then the config volume is mounted at `/redis-master` by `spec.containers[0].volumeMounts[1]`.
 
 This has the net effect of exposing the data in `data.redis-config` from the `example-redis-config`
-ConfigMap above as `/redis-master/redis.conf` inside the Pod.
+ConfigMap above as `/redis-master/redis.conf` inside the pod.
 
 {{% code_sample file="pods/config/redis-pod.yaml" %}}
+
+### Verify configurations
 
 Examine the created objects:
 
@@ -87,7 +86,8 @@ NAME                             DATA   AGE
 configmap/example-redis-config   1      14s
 ```
 
-Recall that we left `redis-config` key in the `example-redis-config` ConfigMap blank:
+The `redis-config` key in the ConfigMap above was left blank.
+You can run the following command to confirm this:
 
 ```shell
 kubectl describe configmap/example-redis-config
@@ -106,7 +106,8 @@ Data
 redis-config:
 ```
 
-Use `kubectl exec` to enter the pod and run the `redis-cli` tool to check the current configuration:
+Use `kubectl exec` to enter the pod.
+Then run the `redis-cli` tool to check the current configuration:
 
 ```shell
 kubectl exec -it redis -- redis-cli
@@ -118,7 +119,7 @@ Check `maxmemory`:
 127.0.0.1:6379> CONFIG GET maxmemory
 ```
 
-It should show the default value of 0:
+This should show the default value of 0:
 
 ```shell
 1) "maxmemory"
@@ -131,14 +132,16 @@ Similarly, check `maxmemory-policy`:
 127.0.0.1:6379> CONFIG GET maxmemory-policy
 ```
 
-Which should also yield its default value of `noeviction`:
+This should yield its default value of `noeviction`:
 
 ```shell
 1) "maxmemory-policy"
 2) "noeviction"
 ```
 
-Now let's add some configuration values to the `example-redis-config` ConfigMap:
+### Add configuration values
+
+Add the following values to the `redis-config` key:
 
 {{% code_sample file="pods/config/example-redis-config.yaml" %}}
 
@@ -154,7 +157,7 @@ Confirm that the ConfigMap was updated:
 kubectl describe configmap/example-redis-config
 ```
 
-You should see the configuration values we just added:
+You should see the following output:
 
 ```shell
 Name:         example-redis-config
@@ -170,7 +173,7 @@ maxmemory 2mb
 maxmemory-policy allkeys-lru
 ```
 
-Check the Redis Pod again using `redis-cli` via `kubectl exec` to see if the configuration was applied:
+Check the Redis pod again using `redis-cli` via `kubectl exec` to confirm that the configuration has been applied:
 
 ```shell
 kubectl exec -it redis -- redis-cli
@@ -182,35 +185,38 @@ Check `maxmemory`:
 127.0.0.1:6379> CONFIG GET maxmemory
 ```
 
-It remains at the default value of 0:
+This should remain at the default value of 0:
 
 ```shell
 1) "maxmemory"
 2) "0"
 ```
 
-Similarly, `maxmemory-policy` remains at the `noeviction` default setting:
+Similarly, `maxmemory-policy` should remain at the `noeviction` default setting:
 
 ```shell
 127.0.0.1:6379> CONFIG GET maxmemory-policy
 ```
 
-Returns:
+This should return:
 
 ```shell
 1) "maxmemory-policy"
 2) "noeviction"
 ```
 
-The configuration values have not changed because the Pod needs to be restarted to grab updated
-values from associated ConfigMaps. Let's delete and recreate the Pod:
+The configuration values have not changed because the pod needs to be restarted to grab updated values from associated ConfigMaps. 
+
+### Recreate the pod
+
+Delete and recreate the pod:
 
 ```shell
 kubectl delete pod redis
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/website/main/content/en/examples/pods/config/redis-pod.yaml
 ```
 
-Now re-check the configuration values one last time:
+Check the configuration values again:
 
 ```shell
 kubectl exec -it redis -- redis-cli
@@ -222,34 +228,33 @@ Check `maxmemory`:
 127.0.0.1:6379> CONFIG GET maxmemory
 ```
 
-It should now return the updated value of 2097152:
+This should now return the updated value of 2097152:
 
 ```shell
 1) "maxmemory"
 2) "2097152"
 ```
 
-Similarly, `maxmemory-policy` has also been updated:
+Similarly, `maxmemory-policy` should also be updated:
 
 ```shell
 127.0.0.1:6379> CONFIG GET maxmemory-policy
 ```
 
-It now reflects the desired value of `allkeys-lru`:
+This now reflects the desired value of `allkeys-lru`:
 
 ```shell
 1) "maxmemory-policy"
 2) "allkeys-lru"
 ```
 
-Clean up your work by deleting the created resources:
+Finally, you can clean up your work by deleting the created resources:
 
 ```shell
 kubectl delete pod/redis configmap/example-redis-config
 ```
 
 ## {{% heading "whatsnext" %}}
-
 
 * Learn more about [ConfigMaps](/docs/tasks/configure-pod-container/configure-pod-configmap/).
 * Follow an example of [Updating configuration via a ConfigMap](/docs/tutorials/configuration/updating-configuration-via-a-configmap/).
