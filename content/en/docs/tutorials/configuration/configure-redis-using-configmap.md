@@ -22,8 +22,8 @@ This example works with `kubectl` 1.14 and above. {{< version-check >}}
 By the end of this guide, you will be able to:
 
 * Create a ConfigMap with Redis configuration values
+* Verify that the configuration is correctly applied
 * Create a Redis pod that mounts and uses the created ConfigMap
-* Verify that the configuration was correctly applied
 
 ## {{% heading "prerequisites" %}}
 
@@ -59,9 +59,9 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes/website/main/conte
 
 Examine the contents of the Redis pod manifest and note the following:
 
-First, a `config` volume is created by `spec.volumes[1]`.
-The `key` and `path` under `spec.volumes[1].configMap.items[0]` expose the `redis-config` key from the `example-redis-config` ConfigMap as a file named `redis.conf` on the `config` volume.
-Then the `config` volume is mounted at `/redis-master` by `spec.containers[0].volumeMounts[1]`.
+First, a config volume is created by `spec.volumes[1]`.
+The key and path under `spec.volumes[1].configMap.items[0]` expose the `redis-config` key from the ConfigMap as a file named `redis.conf` on the config volume.
+Then the config volume is mounted at `/redis-master` by `spec.containers[0].volumeMounts[1]`.
 
 This has the net effect of exposing the data in `data.redis-config` from the `example-redis-config`
 ConfigMap above as `/redis-master/redis.conf` inside the pod.
